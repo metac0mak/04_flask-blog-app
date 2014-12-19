@@ -8,8 +8,8 @@
 	<body>
 
 		<div class="container">
-
-			{% for message in get_flashed_message()  %}
+		
+			{% for message in get_flashed_messages() %}
 				<div class = "flash"> {{ message }}</div>
 			{% endfor %}
 
@@ -21,7 +21,7 @@
 			{% block content %}
 			{% endblock %}
 			<!-- end inheritance -->
-			
+
 		</div>
 
 	</body>

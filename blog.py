@@ -5,7 +5,7 @@
 # imports
 
 
-from flask 			import Flask, render_template, request, session, \
+from flask 			import Flask, flash, render_template, request, session, \
 						   redirect, url_for, g							# from flask module, import listed classes
 
 import sqlite3															# import sqlite3 module
@@ -18,9 +18,9 @@ DATABASE = 'blog.db'
 USERNAME = 'admin'
 PASSWORD = 'admin'
 
-#SECRET_KEY = 'hard_to_guess'
+SECRET_KEY = 'hard_to_guess'
 # Make this key impossible to guess
-SECRET_KEY = os.urandom(24)
+# SECRET_KEY = os.urandom(24)
 
 app = Flask(__name__)
 
@@ -37,7 +37,7 @@ def connect_db():
 # add necessary routes
 
 # login
-@app.route('/')		
+@app.route('/', methods = ['GET', 'POST'])		
 def login():
 	error = None
 	if request.method == 'POST':
@@ -47,10 +47,11 @@ def login():
 			error = 'Invalid Credentials. Please try again.'
 
 		else:
+			flash('You were logged in')
 			session['logged_in'] = True				# user is logged in
 			return redirect(url_for('main'))		# redirect_for() - "generates an enpoint for the provided method."
 
-	return render_template('login.html'., error = error )
+	return render_template('login.html', error = error )
 
 
 # logout
