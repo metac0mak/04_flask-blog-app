@@ -8,6 +8,8 @@
 from flask 			import Flask, flash, render_template, request, session, \
 						   redirect, url_for, g							# from flask module, import listed classes
 
+from functools		import wraps										# used for restricting access 
+
 import sqlite3															# import sqlite3 module
 import os																# use for secret key generation
 # ------
@@ -34,7 +36,19 @@ def connect_db():
 	return sqlite3.connect(app.config['DATABASE'])
 
 
-# add necessary routes
+# login required
+def login_required(test):
+	@wraps(test)
+	def wrap(*args, **kwargs):					# args and 'kw' args as parameters
+		if 'logged_in' in session:
+			return test(*args, **kwargs)
+
+		else:
+			flash('You need to login first . . . ')			# if user not logged in, provide feedback and redirect to login page
+			return redirect(url_for('login'))
+
+	return wrap
+
 
 # login
 @app.route('/', methods = ['GET', 'POST'])		
@@ -61,10 +75,59 @@ def logout():
 	flash('You were logged out')
 	return redirect(url_for('login'))		# user redirected back to login page
 
+
+# add posts
+@app.route('/add', methods=['POST'])
+@login_required
+def add():
+	title = request.form['title']
+	post = request.form['post']
+
+	if not title or not post:
+		flash("All fields are required.  Please try again.")
+		return redirect(url_for('main'))
+
+	else:
+		
+		# connect to db
+		g.db = connect_db()
+
+		
+		# retrieve form contents and insert into db
+		g.db.execute('insert into posts (title, post) values (?, ?)', [request.form['title'], request.form['post']])
+
+		# commit changes
+		g.db.commit()
+
+		#close connection
+		g.db.close()
+
+		# feedback
+		flash("Entry successfully posted!")
+
+		# reload main page
+		return redirect(url_for('main'))
+
 # main page
 @app.route('/main')
+@login_required				# @main now calls the @login_required decorator to handle access
 def main():
-	return render_template('main.html')
+
+	# connect to db
+	g.db = connect_db()
+	
+	# execute sql
+	cur = g.db.execute('SELECT * FROM posts')
+	
+	# capture sql results to dictionary data type
+	# REFRESHER :: Dictionaries are similar to lists, but are unique in that they are key:value pairs.  You can search by 
+	# 			   the keys of a dictionary.  
+	posts = [dict(title=row[0], post=row[1]) for row in cur.fetchall()]
+
+	# close connection
+	g.db.close()
+
+	return render_template('main.html', posts=posts)
 
 
 if __name__ == '__main__':
