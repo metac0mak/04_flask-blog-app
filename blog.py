@@ -39,7 +39,26 @@ def connect_db():
 # login
 @app.route('/')		
 def login():
-	return render_template('login.html')
+	error = None
+	if request.method == 'POST':
+		if 	request.form['username'] != app.config['USERNAME'] or \
+			request.form['password'] != app.config['PASSWORD']:
+
+			error = 'Invalid Credentials. Please try again.'
+
+		else:
+			session['logged_in'] = True				# user is logged in
+			return redirect(url_for('main'))		# redirect_for() - "generates an enpoint for the provided method."
+
+	return render_template('login.html'., error = error )
+
+
+# logout
+@app.route('/logout')
+def logout():
+	session.pop('logged_in', None)			# pop method - "resets the session key to the default value"
+	flash('You were logged out')
+	return redirect(url_for('login'))		# user redirected back to login page
 
 # main page
 @app.route('/main')
